@@ -41,3 +41,25 @@ def read_product(product_id: int, db: Session = Depends(get_db)):
     if product is None:
         raise HTTPException(status_code=404, detail='Product not faund')
     return product
+
+
+@app.put("/products/{product_id}", response_model=schema.Product)
+def update_product(product_id: int, product: schema.ProductCreate, db: Session = Depends(get_db)):
+    db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if db_product is None:
+        raise HTTPException(status_code=404, detail='Product not found')
+    for key, value in product.dict().items():
+        setattr(db_product, key, value)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+
+@app.delete('/products/{product_id}')
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if db_product is None:
+        raise HTTPException(status_code=404, detail='Product not found')
+    db.delete(db_product)
+    db.commit()
+    return {'message': 'Product delete'}
